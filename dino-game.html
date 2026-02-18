@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dino Game | Marcus Luo</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .game-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            margin-top: 30px;
+        }
+        #gameCanvas {
+            background: #f7f7f7;
+            border: 2px solid #333;
+        }
+        .info {
+            margin-left: 20px;
+            max-width: 250px;
+        }
+        .btn-back {
+            display: inline-block;
+            margin-top: 15px;
+            background: #333;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .btn-back:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">Marcus Luo</a>
+            <nav class="nav-links">
+                <a href="index.html">Home</a>
+            </nav>
+        </div>
+    </header>
+    <main>
+        <section class="project-detail">
+            <h2>Dino Game</h2>
+            <p>Jump over obstacles and see how long you can survive! The longer you last, the faster the game gets.</p>
+            <div class="game-container">
+                <canvas id="gameCanvas" width="600" height="200"></canvas>
+                <div class="info">
+                    <p><strong>Score:</strong> <span id="score">0</span></p>
+                    <h3>Controls</h3>
+                    <ul>
+                        <li>Press Space or click/tap to jump</li>
+                    </ul>
+                    <a href="index.html" class="btn-back">Back to Projects</a>
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer class="footer">
+        <p>&copy; 2026 Marcus Luo</p>
+    </footer>
+    <script>
+        (function() {
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            const scoreEl = document.getElementById('score');
+
+            const dino = {
+                x: 50,
+                y: 0,
+                width: 40,
+                height: 40,
+                yVel: 0
+            };
+
+            const gravity = 0.6;
+            const jumpVel = -12;
+            let speed = 6;
+            let score = 0;
+            let isPlaying = false;
+            let obstacles = [];
+            let spawnCounter = 0;
+
+            function resetGame() {
+                dino.y = canvas.height - dino.height;
+                dino.yVel = 0;
+                speed = 6;
+                score = 0;
+                obstacles = [];
+                spawnCounter = 60;
+                isPlaying = true;
+            }
+
+            function spawnObstacle() {
+                const height = 30 + Math.random() * 20;
+                const width = 20 + Math.random() * 20;
+                obstacles.push({
+                    x: canvas.width,
+                    y: canvas.height - height,
+                    width: width,
+                    height: height
+                });
+            }
+
+            function update() {
+                if (!isPlaying) return;
+
+                speed += 0.002;
+
+                // update dinosaur
+                dino.y += dino.yVel;
+                dino.yVel += gravity;
+                if (dino.y + dino.height >= canvas.height) {
+                    dino.y = canvas.height - dino.height;
+                    dino.yVel = 0;
+                }
+
+                // spawn obstacles
+                spawnCounter--;
+                if (spawnCounter <= 0) {
+                    spawnObstacle();
+                    spawnCounter = 50 + Math.random() * 60;
+                }
+
+                // update obstacles
+                for (let i = obstacles.length - 1; i >= 0; i--) {
+                    const obs = obstacles[i];
+                    obs.x -= speed;
+                    if (obs.x + obs.width < 0) {
+                        obstacles.splice(i, 1);
+                    }
+                    // collision detection
+                    if (
+                        dino.x < obs.x + obs.width &&
+                        dino.x + dino.width > obs.x &&
+                        dino.y < obs.y + obs.height &&
+                        dino.y + dino.height > obs.y
+                    ) {
+                        isPlaying = false;
+                    }
+                }
+
+                // update score
+                score += 0.1 * speed;
+                scoreEl.textContent = Math.floor(score);
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // ground line
+                ctx.fillStyle = '#999';
+                ctx.fillRect(0, canvas.height - 2, canvas.width, 2);
+
+                // draw dinosaur
+                ctx.fillStyle = '#007bff';
+                ctx.fillRect(dino.x, dino.y, dino.width, dino.height);
+
+                // draw obstacles
+                ctx.fillStyle = '#dc3545';
+                obstacles.forEach(obs => {
+                    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                });
+
+                if (!isPlaying) {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '20px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Game Over!', canvas.width / 2, 80);
+                    ctx.fillText('Press Space to restart', canvas.width / 2, 110);
+                }
+            }
+
+            function gameLoop() {
+                update();
+                draw();
+                requestAnimationFrame(gameLoop);
+            }
+
+            function jump() {
+                if (!isPlaying) {
+                    resetGame();
+                    return;
+                }
+                if (dino.y + dino.height >= canvas.height) {
+                    dino.yVel = jumpVel;
+                }
+            }
+
+            document.addEventListener('keydown', function(e) {
+                if (e.code === 'Space') {
+                    jump();
+                }
+            });
+
+            document.addEventListener('click', function() {
+                jump();
+            });
+
+            // start the game initially
+            resetGame();
+            gameLoop();
+        })();
+    </script>
+</body>
+</html>
