@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Minesweeper Game</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Additional styles for Minesweeper */
+    .minesweeper-container {
+      max-width: 1000px;
+      margin: 40px auto;
+      display: flex;
+      gap: 20px;
+      padding: 0 20px;
+    }
+
+    #board {
+      display: grid;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .cell {
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      user-select: none;
+      color: #333;
+    }
+
+    .cell.revealed {
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    .cell.mine {
+      background: rgba(255, 0, 0, 0.4);
+    }
+
+    .cell.flagged {
+      background: rgba(255, 255, 255, 0.4);
+      color: #d9534f;
+    }
+
+    .controls {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 15px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      color: #333;
+    }
+
+    .controls h2 {
+      margin-bottom: 10px;
+    }
+
+    .controls p {
+      margin: 5px 0;
+    }
+
+    .controls select,
+    .controls button {
+      margin: 10px 0;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .message {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo">Marcus Luo</a>
+      <nav class="nav-links">
+        <a href="index.html">Home</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Minesweeper</h1>
+      <p>Left click to reveal a square. Right click to flag a mine. Choose a board size and see if you can clear the field!</p>
+    </section>
+    <div class="minesweeper-container">
+      <div id="board"></div>
+      <div class="controls">
+        <h2>Game Options</h2>
+        <label for="sizeSelect">Board size:</label><br>
+        <select id="sizeSelect">
+          <option value="10">Easy (10×10)</option>
+          <option value="20">Medium (20×20)</option>
+          <option value="30">Hard (30×30)</option>
+        </select><br>
+        <button id="restartBtn">Restart Game</button>
+        <div class="scoreboard">
+          <p>Bombs: <span id="bombCount">0</span></p>
+          <p>Flags used: <span id="flagCount">0</span></p>
+        </div>
+        <div class="instructions">
+          <h2>Controls</h2>
+          <p>Left click: reveal square</p>
+          <p>Right click: flag/unflag square</p>
+        </div>
+        <div id="message" class="message"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2026 Marcus Luo</p>
+  </footer>
+
+  <script>
+    // Minesweeper game script
+    (function() {
+      const boardElement = document.getElementById('board');
+      const sizeSelect = document.getElementById('sizeSelect');
+      const restartBtn = document.getElementById('restartBtn');
+      const bombCountEl = document.getElementById('bombCount');
+      const flagCountEl = document.getElementById('flagCount');
+      const messageEl = document.getElementById('message');
+
+      let boardSize = parseInt(sizeSelect.value);
+      let numMines = 0;
+      let board = [];
+      let revealedCount = 0;
+      let flagCount = 0;
+      let gameOver = false;
+
+      const mineCountForSize = {10: 15, 20: 60, 30: 120};
+
+      function init() {
+        boardSize = parseInt(sizeSelect.value);
+        numMines = mineCountForSize[boardSize] || Math.floor(boardSize * boardSize * 0.15);
+        bombCountEl.textContent = numMines;
+        flagCount = 0;
+        flagCountEl.textContent = flagCount;
+        messageEl.textContent = '';
+        revealedCount = 0;
+        gameOver = false;
+        createBoard(boardSize);
+        placeMines();
+        calculateNumbers();
+        renderBoard();
+      }
+
+      function createBoard(size) {
+        board = [];
+        for (let r = 0; r < size; r++) {
+          const row = [];
+          for (let c = 0; c < size; c++) {
+            row.push({ mine: false, revealed: false, flagged: false, count: 0 });
+          }
+          board.push(row);
+        }
+      }
+
+      function placeMines() {
+        let minesPlaced = 0;
+        while (minesPlaced < numMines) {
+          const r = Math.floor(Math.random() * boardSize);
+          const c = Math.floor(Math.random() * boardSize);
+          if (!board[r][c].mine) {
+            board[r][c].mine = true;
+            minesPlaced++;
+          }
+        }
+      }
+
+      function calculateNumbers() {
+        const dirs = [-1, 0, 1];
+        for (let r = 0; r < boardSize; r++) {
+          for (let c = 0; c < boardSize; c++) {
+            if (board[r][c].mine) continue;
+            let count = 0;
+            for (let dr of dirs) {
+              for (let dc of dirs) {
+                if (dr === 0 && dc === 0) continue;
+                const nr = r + dr;
+                const nc = c + dc;
+                if (nr >= 0 && nr < boardSize && nc >= 0 && nc < boardSize && board[nr][nc].mine) {
+                  count++;
+                }
+              }
+            }
+            board[r][c].count = count;
+          }
+        }
+      }
+
+      function renderBoard() {
+        boardElement.innerHTML = '';
+        // determine board width based on size
+        const boardWidth = boardSize <= 10 ? 400 : boardSize <= 20 ? 500 : 600;
+        boardElement.style.width = boardWidth + 'px';
+        boardElement.style.height = boardWidth + 'px';
+        boardElement.style.gridTemplateColumns = `repeat(${boardSize}, 1fr)`;
+        for (let r = 0; r < boardSize; r++) {
+          for (let c = 0; c < boardSize; c++) {
+            const cellDiv = document.createElement('div');
+            cellDiv.classList.add('cell');
+            cellDiv.dataset.row = r;
+            cellDiv.dataset.col = c;
+            boardElement.appendChild(cellDiv);
+          }
+        }
+      }
+
+      function revealCell(r, c) {
+        const cell = board[r][c];
+        if (cell.revealed || cell.flagged || gameOver) return;
+        const cellDiv = boardElement.children[r * boardSize + c];
+        cell.revealed = true;
+        cellDiv.classList.add('revealed');
+        if (cell.mine) {
+          cellDiv.classList.add('mine');
+          cellDiv.textContent = '💣';
+          endGame(false);
+        } else {
+          revealedCount++;
+          if (cell.count > 0) {
+            cellDiv.textContent = cell.count;
+          } else {
+            // Flood fill neighbors
+            const dirs = [-1, 0, 1];
+            for (let dr of dirs) {
+              for (let dc of dirs) {
+                if (dr === 0 && dc === 0) continue;
+                const nr = r + dr;
+                const nc = c + dc;
+                if (nr >= 0 && nr < boardSize && nc >= 0 && nc < boardSize) {
+                  if (!board[nr][nc].revealed) revealCell(nr, nc);
+                }
+              }
+            }
+          }
+          checkWin();
+        }
+      }
+
+      function checkWin() {
+        const totalCells = boardSize * boardSize;
+        if (revealedCount === totalCells - numMines && !gameOver) {
+          endGame(true);
+        }
+      }
+
+      function toggleFlag(r, c) {
+        const cell = board[r][c];
+        if (cell.revealed || gameOver) return;
+        const cellDiv = boardElement.children[r * boardSize + c];
+        if (cell.flagged) {
+          cell.flagged = false;
+          flagCount--;
+          cellDiv.classList.remove('flagged');
+          cellDiv.textContent = '';
+        } else {
+          if (flagCount < numMines) {
+            cell.flagged = true;
+            flagCount++;
+            cellDiv.classList.add('flagged');
+            cellDiv.textContent = '🚩';
+          }
+        }
+        flagCountEl.textContent = flagCount;
+      }
+
+      function endGame(won) {
+        gameOver = true;
+        messageEl.textContent = won ? 'Congratulations! You cleared the minefield!' : 'Boom! You hit a mine.';
+        if (!won) {
+          // reveal all mines
+          for (let r = 0; r < boardSize; r++) {
+            for (let c = 0; c < boardSize; c++) {
+              const cell = board[r][c];
+              const cellDiv = boardElement.children[r * boardSize + c];
+              if (cell.mine) {
+                cellDiv.textContent = '💣';
+                cellDiv.classList.add('mine');
+              }
+            }
+          }
+        }
+      }
+
+      boardElement.addEventListener('click', function(e) {
+        const target = e.target;
+        if (!target.classList.contains('cell')) return;
+        const r = parseInt(target.dataset.row);
+        const c = parseInt(target.dataset.col);
+        revealCell(r, c);
+      });
+
+      boardElement.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        const target = e.target;
+        if (!target.classList.contains('cell')) return;
+        const r = parseInt(target.dataset.row);
+        const c = parseInt(target.dataset.col);
+        toggleFlag(r, c);
+      });
+
+      sizeSelect.addEventListener('change', init);
+      restartBtn.addEventListener('click', init);
+
+      init();
+    })();
+  </script>
+</body>
+</html>
