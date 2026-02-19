@@ -1,3 +1,4 @@
+/* Modern glassmorphism styles */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -6,19 +7,22 @@
 
 body {
   font-family: Arial, sans-serif;
-  background-color: #f5f5f5;
+  background: linear-gradient(135deg, #f0f3f5 0%, #e2ebf0 100%);
   color: #333;
+  min-height: 100vh;
 }
 
 .navbar {
   position: sticky;
   top: 0;
-  background-color: #222;
-  color: #fff;
-  padding: 10px 0;
   width: 100%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 10px 0;
+  background: rgba(255, 255, 255, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   z-index: 1000;
+  color: #333;
 }
 
 .nav-container {
@@ -31,9 +35,10 @@ body {
 }
 
 .nav-links a {
-  color: #fff;
-  margin-left: 15px;
+  color: #333;
   text-decoration: none;
+  margin-left: 15px;
+  font-weight: bold;
 }
 
 .nav-links a:hover {
@@ -41,9 +46,12 @@ body {
 }
 
 .hero {
-  background-color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
   padding: 60px 20px;
   text-align: center;
+  border-radius: 15px;
+  margin: 40px 0;
 }
 
 .hero h1 {
@@ -53,7 +61,7 @@ body {
 
 .hero p {
   font-size: 1.1em;
-  color: #666;
+  color: #444;
 }
 
 .projects {
@@ -74,11 +82,13 @@ body {
 }
 
 .project-card {
-  background-color: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 15px;
   padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  color: #333;
 }
 
 .project-card h3 {
@@ -91,8 +101,9 @@ body {
 }
 
 .project-card .project-link {
-  color: #0073e6;
+  color: #007bff;
   text-decoration: none;
+  font-weight: bold;
 }
 
 .project-card .project-link:hover {
@@ -102,6 +113,6 @@ body {
 .footer {
   text-align: center;
   padding: 20px;
-  color: #777;
+  color: #666;
   font-size: 0.9em;
 }
